@@ -42,6 +42,7 @@ type VestingResponse = {
   vestingDate: number;
   currentSlot: number;
   mustBeSignedBy: string;
+  status?: "Pending" | "Submitted";
 };
 
 export function Available() {
@@ -83,7 +84,7 @@ export function Available() {
         .catch((e) => {
           toast.error("Error fetching addresses");
           console.error(e);
-        })
+        });
     } catch (e) {
       toast.error("Error fetching addresses");
       console.error(e);
@@ -191,6 +192,25 @@ export function Available() {
 
       toast.success("Transaction submitted successfully!");
       setTxHash(txHash);
+
+      const updatedCart = new Map(cart);
+      updatedCart.forEach((value) => {
+        value.status = "Submitted";
+      });
+      setCart(updatedCart);
+
+      const confirmed = await lucid.awaitTx(txHash);
+      if (confirmed) {
+        toast.success("Transaction confirmed!");
+        refetch(); // Refresh the data after confirmation
+      } else {
+        toast.error("Transaction not confirmed within the expected time.");
+        updatedCart.forEach((value) => {
+          value.status = "Pending";
+        }
+        );
+        setCart(updatedCart);
+      }
     } catch (e) {
       toast.error("Error processing cart");
       console.error(e);
@@ -223,7 +243,7 @@ export function Available() {
 
   useEffect(() => {
     if (!data) return;
-      setLoadingState("loading");
+    setLoadingState("loading");
 
     // Calculate total, claimed, unclaimed, and locked values
     let totalAmount = 0;
@@ -252,7 +272,7 @@ export function Available() {
   );
 
   return (
-    <span className=" flex flex-col mt-4 md:mt-8 w-full h-full overflow-scroll">
+    <span className=" flex flex-col mt-4 md:mt-8 w-full h-full">
       <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-end">
         <div className="flex flex-col">
           <p className="text-gray-600 font-semibold">$TOKE</p>
@@ -262,12 +282,32 @@ export function Available() {
           <p className="text-gray-800 p-1 border-r border-gray-600 text-sm bg-gray-200 font-semibold">
             $TOKE
           </p>
-          <div className="flex p-1">
-            <p className="md:flex hidden text-sm font-semibold">
+          <div className="flex p-1 items-center">
+            <p className="lg:flex hidden text-sm font-semibold">
               375df3f2fb44d3c42b3381a09edd4ea2303a57ada32b5308c0774ee0544f4b45
             </p>
-            <p className="md:hidden flex text-sm">375df3f2..544f4b45</p>
-            {/* //copy icon */}
+            <p className="lg:hidden flex text-sm">375df3f2..544f4b45</p>
+          <div className="flex items-center pl-1" onClick={
+            () => {
+              navigator.clipboard.writeText("375df3f2fb44d3c42b3381a09edd4ea2303a57ada32b5308c0774ee0544f4b45");
+              toast.success("Copied to clipboard");
+            }
+          }>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5A3.375 3.375 0 0 0 6.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0 0 15 2.25h-1.5a2.251 2.251 0 0 0-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 0 0-9-9Z"
+              />
+            </svg>
+            </div>
           </div>
         </div>
       </div>
@@ -278,7 +318,7 @@ export function Available() {
       ) : (
         <>
           {!connected ? (
-            <div className="w-max mx-auto my-auto px-2 md:px-8 py-8 flex flex-col gap-8 items-center justify-center rounded-md border border-gray-800 bg-gray-200">
+            <div className="max-w-max w-full mx-auto my-auto px-2 md:px-8 py-8 flex flex-col gap-6 items-center justify-center rounded-md border border-gray-600 bg-gray-200 shadow">
               <CardanoWallet />
               <p className="text-gray-800 font-semibold text-lg">
                 Connect your wallet to view your allocation
@@ -293,7 +333,7 @@ export function Available() {
                 locked={locked}
               />
 
-              <table className="w-full border-collapse border border-gray-800 rounded-lg overflow-hidden">
+              <table className="w-full border-collapse border border-gray-800 rounded-lg overflow-hidden shadow">
                 <thead>
                   <tr className="bg-gray-200">
                     <th className="px-4 py-3 text-gray-800 text-left font-semibold">
@@ -329,7 +369,15 @@ export function Available() {
                           {u.amount.toLocaleString()} TOKE
                         </td>
                         <td className="px-4 py-2 text-right">
-                          {u.available ? (
+                          {u.status === "Submitted" ? (
+                            <p
+                              className="
+                              text-green-500 font-semibold py-1 px-4 rounded transition w-maz
+                            "
+                            >
+                              Submitted
+                            </p>
+                          ) : u.available ? (
                             <button
                               onClick={() =>
                                 isInCart ? removeFromCart(u) : addToCart(u)
@@ -347,7 +395,8 @@ export function Available() {
                               disabled
                               className="bg-gray-400 text-gray-600 font-semibold py-1 px-4 rounded cursor-not-allowed"
                             >
-                              Unavailable
+                              <p className="md:flex hidden">Unavailable</p>
+                              <p className="md:hidden flex">N/A</p>
                             </button>
                           )}
                         </td>
@@ -450,7 +499,7 @@ export function AllocationBar({
           }}
         ></div>
       </div>
-      <div className="allocation-info mt-2 flex gap-4">
+      <div className="allocation-info mt-2 flex gap-x-4 w-full flex-wrap">
         <span
           style={{ color: "#000000", display: "flex", alignItems: "center" }}
         >
