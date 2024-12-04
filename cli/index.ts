@@ -1,94 +1,138 @@
 import {Data, getAddressDetails, Lucid, Maestro, validatorToAddress, type Assets} from "@lucid-evolution/lucid"
 import {readFile} from "node:fs/promises"
 import plutus from "../plutus.json"
+import { createReadStream } from "node:fs";
+import { parse } from "csv-parse";
 
 async function main() {
   // const blockfrost = new BlockfrostProvider()
-  
-  const args = process.argv
 
-  const network = args[2]
-  const maestroApiKey = args[3]
-  const policy = args[4]
-  const tokenName = args[5]
+  const args = process.argv;
+  const inDebug = process.env.DEBUG == "1";
 
-  const mnemonic = await readFile(args[6])
-  
+  const network = args[2];
+  const maestroApiKey = args[3];
+  const policy = args[4];
+  const tokenName = args[5];
+  const mnemonic = await readFile(args[6]);
+  const file = createReadStream(args[7], "utf8");
+
+  const parser = parse({
+    delimiter: ",",
+  });
+  const pipe = file.pipe(parser);
+
   const lucid = await Lucid(
     new Maestro({
-      network: network === 'mainnet' ? 'Mainnet' : 'Preprod', // For MAINNET: "Mainnet"
+      network: network === "mainnet" ? "Mainnet" : "Preprod", // For MAINNET: "Mainnet"
       apiKey: maestroApiKey, // Get yours by visiting https://docs.gomaestro.org/docs/Getting-started/Sign-up-login
       turboSubmit: false, // Read about paid turbo transaction submission feature at https://docs.gomaestro.org/docs/Dapp%20Platform/Turbo%20Transaction
     }),
     // new Blockfrost('https://cardano-mainnet.blockfrost.io/api/v0', flags.bfApiKey),
-    network === 'mainnet' ? 'Mainnet' : 'Preprod',
-  )
+    network === "mainnet" ? "Mainnet" : "Preprod"
+  );
 
-  lucid.selectWallet.fromSeed(mnemonic.toString("utf-8"))
+  lucid.selectWallet.fromSeed(mnemonic.toString("utf-8"));
 
-  const validator = plutus.validators[0]
+  const validator = plutus.validators[0];
 
-  const contractAddress = validatorToAddress(network === 'mainnet' ? 'Mainnet' : 'Preprod', {
-    type: "PlutusV3",
-    "script": validator.compiledCode
-  })
-  
-  let tx = lucid.newTx()
+  const contractAddress = validatorToAddress(
+    network === "mainnet" ? "Mainnet" : "Preprod",
+    {
+      type: "PlutusV3",
+      script: validator.compiledCode,
+    }
+  );
 
-  const calcSlotForDate = getDateToCurrentSlot(lucid.currentSlot())
+  let tx = lucid.newTx();
 
-  let outputs = 0
+  const calcSlotForDate = getDateToCurrentSlot(lucid.currentSlot());
 
-  for (let payout of payouts) {
-    for(let i = 1; i < 18; i = i + 1) {
-      const forDate = payout[`Date - ${i}`] as string;
+  let outputs = 0;
 
-      if (!forDate) continue
-      
-      const amount = Number.parseInt((payout[`Unlock - ${i}`] as string).replaceAll(",", ""))
+  let report = [];
+  let header = true;
+  for await (const payout of pipe) {
+    if (header) {
+      header = false;
+      continue;
+    }
+    for (let i = 14; i < payout.length - 2; i = i + 2) {
+      const forDate = payout[i] as string;
+      const payoutAmt = payout[i + 1] as string;
+      const beneficiary = payout[4];
 
-      const slot = calcSlotForDate(Date.parse(forDate + '.Z') /1000 )
+      console.log(forDate, payoutAmt, beneficiary);
+
+      if (!forDate) continue;
+
+      const amount = Number.parseInt(payoutAmt.replaceAll(",", ""));
+
+      const slot = calcSlotForDate(Date.parse(forDate + ".Z") / 1000);
 
       const datum: TokeDatum = {
         slot: BigInt(slot).valueOf(),
-        beneficiary: getAddressDetails(payout["Wallet Address"]).paymentCredential!.hash
-      }
+        beneficiary: getAddressDetails(beneficiary).paymentCredential!.hash,
+      };
 
-      const d = Data.to(datum, TokeDatum)
-      
+      const d = Data.to(datum, TokeDatum);
+
       const asset: Assets = {
-        [`${policy}${tokenName}`]: BigInt(amount).valueOf()
-      }
+        [`${policy}${tokenName}`]: BigInt(amount).valueOf(),
+      };
 
-      tx = tx.pay.ToContract(contractAddress, { kind: "inline", value: d }, asset)
+      tx = tx.pay.ToContract(
+        contractAddress,
+        { kind: "inline", value: d },
+        asset
+      );
 
       outputs += 1;
 
-      if (outputs > 10) {
-        const [newWalletInputs, , chainTx] = await tx.chain()
-        const signed = await chainTx.sign.withWallet().complete()
-        console.log(signed.toCBOR(), "\n\n")
+      report.push({
+        beneficiary,
+        amount,
+        vestingDate: forDate,
+        slot,
+      });
+
+      if (outputs > 30) {
+        const [newWalletInputs, , chainTx] = await tx.chain();
+        const signed = await chainTx.sign.withWallet().complete();
+        console.log(signed.toCBOR(), "\n\n");
         lucid.overrideUTxOs(newWalletInputs);
 
-        const txHash = await signed.submit()
-        console.log(txHash)
+        if (!inDebug) {
+          const txHash = await signed.submit();
+          console.log(txHash);
 
-        console.log(await lucid.wallet().getUtxos())
+          await lucid.awaitTx(txHash);
+        }
+        // console.log(await lucid.wallet().getUtxos());
         // Do stuff
-        outputs = 0
-        tx = lucid.newTx()
+        outputs = 0;
+        tx = lucid.newTx();
       }
     }
   }
 
   if (outputs > 0) {
-    const [newWalletInputs, , chainTx] = await tx.chain()
-    const signed = await chainTx.sign.withWallet().complete()
-    console.log("\n\n", signed.toCBOR(), "\n\n")
-    const txHash = await signed.submit()
-    console.log("txHash", txHash)
-    lucid.overrideUTxOs(newWalletInputs)
+    const [newWalletInputs, , chainTx] = await tx.chain();
+    const signed = await chainTx.sign.withWallet().complete();
+
+    if (!inDebug) {
+      const txHash = await signed.submit();
+      console.log(txHash);
+
+      await lucid.awaitTx(txHash);
+      console.log("\n\n", signed.toCBOR(), "\n\n");
+      // const txHash = await signed.submit();
+      // console.log("txHash", txHash);
+      lucid.overrideUTxOs(newWalletInputs);
+    }
   }
+
+  console.table(report);
 }
 
 
