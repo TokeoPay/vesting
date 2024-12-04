@@ -7,12 +7,10 @@ import { useEffect, useState, useRef } from "react";
 import { validators } from "../../../plutus.json";
 import {
   Lucid,
-  // Blockfrost,
   WalletApi,
   Constr,
   Data,
   UTxO,
-  Kupmios,
   Blockfrost,
 } from "@lucid-evolution/lucid";
 import toast from "react-hot-toast";
@@ -116,13 +114,14 @@ export function Available() {
       { threshold: 1.0 }
     );
 
-    if (tableButtonRef.current) {
-      observer.observe(tableButtonRef.current);
+    const tbr = tableButtonRef.current;
+    if (tbr) {
+      observer.observe(tbr);
     }
 
     return () => {
-      if (tableButtonRef.current) {
-        observer.unobserve(tableButtonRef.current);
+      if (tbr) {
+        observer.unobserve(tbr);
       }
     };
   }, []);
@@ -187,7 +186,7 @@ export function Available() {
       console.log(completeTx.toCBOR());
 
       const signed = await completeTx.sign.withWallet().complete();
-      let txHash = await signed.submit();
+      const txHash = await signed.submit();
 
       lucid.awaitTx(txHash);
 
@@ -247,7 +246,7 @@ export function Available() {
 
     // Calculate total, claimed, unclaimed, and locked values
     let totalAmount = 0;
-    let claimedAmount = 0;
+    const claimedAmount = 0;
     let unclaimedAmount = 0;
     let lockedAmount = 0;
 
@@ -452,7 +451,7 @@ export function Available() {
 
 export function AllocationBar({
   total,
-  claimed,
+  // claimed,
   unclaimed,
   locked,
 }: {
@@ -461,7 +460,7 @@ export function AllocationBar({
   unclaimed: number;
   locked: number;
 }) {
-  const claimedPercentage = (claimed / total) * 100;
+  // const claimedPercentage = (claimed / total) * 100;
   const unclaimedPercentage = (unclaimed / total) * 100;
   const lockedPercentage = (locked / total) * 100;
 
