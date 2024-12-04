@@ -1,0 +1,23 @@
+name = "tokeo/simple-vesting"
+version = "0.0.0"
+compiler = "v1.1.5"
+plutus = "v3"
+license = "Apache-2.0"
+description = "Aiken contracts for project 'tokeo/simple-vesting'"
+
+[repository]
+user = "tokeo"
+project = "simple-vesting"
+platform = "github"
+
+[[dependencies]]
+name = "aiken-lang/stdlib"
+version = "v2.1.0"
+source = "github"
+
+[[dependencies]]
+name = "aiken-extra/tx_util"
+version = "1.210.202409"
+source = "github"
+
+[config]

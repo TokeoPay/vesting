@@ -1,0 +1,19 @@
+{
+  "name": "toke-cli",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@lucid-evolution/lucid": "^0.4.12",
+    "@meshsdk/core": "^1.7.22",
+    "@meshsdk/core-csl": "^1.7.22",
+    "@meshsdk/provider": "^1.7.22",
+    "@meshsdk/transaction": "^1.7.22",
+    "@meshsdk/wallet": "^1.7.22"
+  }
+}
