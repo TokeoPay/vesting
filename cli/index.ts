@@ -44,95 +44,105 @@ async function main() {
     }
   );
 
-  let tx = lucid.newTx();
-
-  const calcSlotForDate = getDateToCurrentSlot(lucid.currentSlot());
-
-  let outputs = 0;
-
   let report = [];
-  let header = true;
-  for await (const payout of pipe) {
-    if (header) {
-      header = false;
-      continue;
-    }
-    for (let i = 14; i < payout.length - 2; i = i + 2) {
-      const forDate = payout[i] as string;
-      const payoutAmt = payout[i + 1] as string;
-      const beneficiary = payout[4];
+  let txHashList = [];
 
-      console.log(forDate, payoutAmt, beneficiary);
+  try {
+    let tx = lucid.newTx();
 
-      if (!forDate) continue;
+    const calcSlotForDate = getDateToCurrentSlot(lucid.currentSlot());
 
-      const amount = Number.parseInt(payoutAmt.replaceAll(",", ""));
+    let outputs = 0;
 
-      const slot = calcSlotForDate(Date.parse(forDate + ".Z") / 1000);
+    let header = true;
+    for await (const payout of pipe) {
+      if (header) {
+        header = false;
+        continue;
+      }
+      for (let i = 14; i < payout.length - 2; i = i + 2) {
+        const forDate = payout[i] as string;
+        const payoutAmt = payout[i + 1] as string;
+        const beneficiary = payout[4];
 
-      const datum: TokeDatum = {
-        slot: BigInt(slot).valueOf(),
-        beneficiary: getAddressDetails(beneficiary).paymentCredential!.hash,
-      };
+        console.log(forDate, payoutAmt, beneficiary);
 
-      const d = Data.to(datum, TokeDatum);
+        if (!forDate) continue;
 
-      const asset: Assets = {
-        [`${policy}${tokenName}`]: BigInt(amount).valueOf(),
-      };
+        const amount = Number.parseInt(payoutAmt.replaceAll(",", ""));
 
-      tx = tx.pay.ToContract(
-        contractAddress,
-        { kind: "inline", value: d },
-        asset
-      );
+        const slot = calcSlotForDate(Date.parse(forDate + ".Z") / 1000);
 
-      outputs += 1;
+        const datum: TokeDatum = {
+          slot: BigInt(slot).valueOf(),
+          beneficiary: getAddressDetails(beneficiary).paymentCredential!.hash,
+        };
 
-      report.push({
-        beneficiary,
-        amount,
-        vestingDate: forDate,
-        slot,
-      });
+        const d = Data.to(datum, TokeDatum);
 
-      if (outputs > 30) {
-        const [newWalletInputs, , chainTx] = await tx.chain();
-        const signed = await chainTx.sign.withWallet().complete();
-        console.log(signed.toCBOR(), "\n\n");
-        lucid.overrideUTxOs(newWalletInputs);
+        const asset: Assets = {
+          [`${policy}${tokenName}`]: BigInt(amount).valueOf(),
+        };
 
-        if (!inDebug) {
-          const txHash = await signed.submit();
-          console.log(txHash);
+        tx = tx.pay.ToContract(
+          contractAddress,
+          { kind: "inline", value: d },
+          asset
+        );
 
-          await lucid.awaitTx(txHash);
+        outputs += 1;
+
+        report.push({
+          beneficiary,
+          amount,
+          vestingDate: forDate,
+          slot,
+        });
+
+        if (outputs > 30) {
+          const [newWalletInputs, , chainTx] = await tx.chain();
+          const signed = await chainTx.sign.withWallet().complete();
+          console.log(signed.toCBOR(), "\n\n");
+          lucid.overrideUTxOs(newWalletInputs);
+
+          if (!inDebug) {
+            const txHash = await signed.submit();
+            txHashList.push(txHash);
+            console.log(txHash);
+
+            await lucid.awaitTx(txHash);
+          }
+          // console.log(await lucid.wallet().getUtxos());
+          // Do stuff
+          outputs = 0;
+          tx = lucid.newTx();
         }
-        // console.log(await lucid.wallet().getUtxos());
-        // Do stuff
-        outputs = 0;
-        tx = lucid.newTx();
       }
     }
-  }
 
-  if (outputs > 0) {
-    const [newWalletInputs, , chainTx] = await tx.chain();
-    const signed = await chainTx.sign.withWallet().complete();
+    if (outputs > 0) {
+      const [newWalletInputs, , chainTx] = await tx.chain();
+      const signed = await chainTx.sign.withWallet().complete();
 
-    if (!inDebug) {
-      const txHash = await signed.submit();
-      console.log(txHash);
+      if (!inDebug) {
+        const txHash = await signed.submit();
+        console.log(txHash);
+        txHashList.push(txHash);
 
-      await lucid.awaitTx(txHash);
-      console.log("\n\n", signed.toCBOR(), "\n\n");
-      // const txHash = await signed.submit();
-      // console.log("txHash", txHash);
-      lucid.overrideUTxOs(newWalletInputs);
+        await lucid.awaitTx(txHash);
+        console.log("\n\n", signed.toCBOR(), "\n\n");
+        // const txHash = await signed.submit();
+        // console.log("txHash", txHash);
+        lucid.overrideUTxOs(newWalletInputs);
+      }
     }
+  } catch (e) {
+    console.error(e);
+    console.log(await lucid.wallet().getUtxos());
   }
 
   console.table(report);
+  console.log("\n\n", txHashList);
 }
 
 

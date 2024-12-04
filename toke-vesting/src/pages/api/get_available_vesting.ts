@@ -29,6 +29,11 @@ export default async function handler(
 ) {
   const { addresses, network } = req.body;
 
+  const tokeToken =
+    network === "Mainnet"
+      ? "375df3f2fb44d3c42b3381a09edd4ea2303a57ada32b5308c0774ee0544f4b45"
+      : "9a5046383eac69a68377823db320d4d7739a9915262a75dadd0ca601544f4b45";
+
   if (!Array.isArray(addresses)) {
     return res
       .status(400)
@@ -94,8 +99,7 @@ export default async function handler(
           amount: u.amount.entries().reduce((acc, asset) => {
             return (
               acc +
-              (asset[1].unit ===
-              "9a5046383eac69a68377823db320d4d7739a9915262a75dadd0ca601544f4b45"
+              (asset[1].unit === tokeToken
                 ? Number.parseInt(asset[1].quantity)
                 : 0)
             );
