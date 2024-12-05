@@ -283,14 +283,14 @@ export function Available() {
           </p>
           <div className='flex p-1 items-center'>
             <p className='lg:flex hidden text-sm font-semibold'>
-              375df3f2fb44d3c42b3381a09edd4ea2303a57ada32b5308c0774ee0544f4b45
+              375df3f2fb44d3c42b3381a09edd4ea2303a57ada32b5308c0774ee0
             </p>
-            <p className='lg:hidden flex text-sm'>375df3f2..544f4b45</p>
+            <p className='lg:hidden flex text-sm'>375df3f2..8c0774ee0</p>
             <div
               className='flex items-center pl-1'
               onClick={() => {
                 navigator.clipboard.writeText(
-                  "375df3f2fb44d3c42b3381a09edd4ea2303a57ada32b5308c0774ee0544f4b45"
+                  "375df3f2fb44d3c42b3381a09edd4ea2303a57ada32b5308c0774ee0"
                 );
                 toast.success("Copied to clipboard");
               }}
