@@ -212,6 +212,19 @@ export function Available() {
       }
     } catch (e) {
       toast.error("Error processing cart");
+      fetch("/api/log", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: ["Error from processCart: ", e],
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => console.log("API Response:", data))
+        .catch((err) => console.error("Error:", err));
+
       console.error(e);
     } finally {
       setLoadingState("none");
