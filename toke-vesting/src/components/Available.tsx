@@ -16,7 +16,7 @@ import {
 import toast from "react-hot-toast";
 
 const blockfrost = new Blockfrost(
-  "https://cardano-preprod.blockfrost.io/api/v0",
+  "https://cardano-mainnet.blockfrost.io/api/v0",
   process.env.NEXT_PUBLIC_BF_API!
 );
 
