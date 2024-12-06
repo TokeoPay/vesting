@@ -42,7 +42,6 @@ type VestingResponse = {
 export function Available() {
   const tableButtonRef = useRef<HTMLButtonElement | null>(null);
   const { connected, wallet } = useWallet();
-  const [txHash, setTxHash] = useState("");
   const [addresses, setAddresses] = useState<string[]>();
   const [cart, setCart] = useState(new Map<string, VestingResponse>());
 
@@ -64,7 +63,6 @@ export function Available() {
   useEffect(() => {
     if (!connected) return;
     setCart(new Map());
-    setTxHash("");
     setAddresses([]);
 
     try {
@@ -232,7 +230,6 @@ export function Available() {
         }
       );
 
-      setTxHash(txHash);
 
       const updatedCart = new Map(cart);
       updatedCart.forEach((value) => {
@@ -272,7 +269,7 @@ export function Available() {
     }
   }
 
-  const { data, refetch } = useQuery({
+  const { data } = useQuery({
     queryKey: ["vestingData"],
     enabled: !!addresses?.length,
     queryFn: () =>
