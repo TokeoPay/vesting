@@ -11,14 +11,9 @@ import {
   Constr,
   Data,
   UTxO,
-  Blockfrost,
+  Kupmios,
 } from "@lucid-evolution/lucid";
 import toast from "react-hot-toast";
-
-const blockfrost = new Blockfrost(
-  "https://cardano-mainnet.blockfrost.io/api/v0",
-  process.env.NEXT_PUBLIC_BF_API!
-);
 
 type VestingResponse = {
   utxo: {
@@ -130,7 +125,10 @@ export function Available() {
     if (cart.size === 0) return;
     try {
       setLoadingState("processing");
-      const lucid = await Lucid(blockfrost, "Mainnet"); // new Kupmios("/kupo", "/ogmios"), "Preprod");
+      const lucid = await Lucid(
+        new Kupmios("/kupo-mn", "/ogmios-mn"),
+        "Mainnet"
+      );
 
       lucid.selectWallet.fromAPI(
         wallet._walletInstance as unknown as WalletApi
@@ -180,7 +178,7 @@ export function Available() {
         })
         .complete({
           changeAddress: walletAddress,
-          localUPLCEval: true,
+          localUPLCEval: false,
         });
 
       console.log(completeTx.toCBOR());
