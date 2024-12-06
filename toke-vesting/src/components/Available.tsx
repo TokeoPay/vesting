@@ -180,7 +180,7 @@ export function Available() {
         })
         .complete({
           changeAddress: walletAddress,
-          localUPLCEval: false,
+          localUPLCEval: true,
         });
 
       console.log(completeTx.toCBOR());
