@@ -188,8 +188,6 @@ export function Available() {
 
       lucid.awaitTx(txHash);
 
-      toast.success("Transaction submitted successfully!");
-      //do a toast with txHash and copy to clipboard button
       toast(
         <div className="flex items-center gap-2">
           <svg
