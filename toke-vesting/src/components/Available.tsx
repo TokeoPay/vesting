@@ -216,7 +216,7 @@ export function Available() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          messages: ["Error from processCart: ", e],
+          messages: ["Error from processCart: ", JSON.stringify(e)],
         }),
       })
         .then((res) => res.json())
