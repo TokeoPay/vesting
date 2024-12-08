@@ -118,55 +118,70 @@ export function Available() {
       }
     };
   }, []);
-
   async function processCart() {
-    if (cart.size === 0) return;
+    const errorLogs = ["Starting: "];
+    if (cart.size === 0) {
+      errorLogs.push("Cart is empty, exiting.");
+      console.log(errorLogs);
+      return;
+    }
     try {
       setLoadingState("processing");
+      errorLogs.push("Initializing Lucid instance...");
       const lucid = await Lucid(
         new Kupmios("/kupo-mn", "/ogmios-mn"),
         "Mainnet"
       );
-
+  
+      errorLogs.push("Selecting wallet from API...");
       lucid.selectWallet.fromAPI(
         wallet._walletInstance as unknown as WalletApi
       );
+  
+      errorLogs.push("Preparing Plutus script...");
       const script: PlutusScript = {
         version: "V3",
         code: validators[0].compiledCode,
       };
+  
+      errorLogs.push("Setting redeemer...");
       const redeemer = Data.to(new Constr(0, []));
-      // cart.values().map((utxo) => )
-
+  
+      errorLogs.push("Mapping UTxOs from cart...");
       const scriptUtxos = cart
         .values()
         .map((utxo) => {
           const assets: Record<string, bigint> = {};
-
           utxo.utxo.amount.forEach((asset) => {
             assets[asset.unit] = BigInt(asset.quantity);
           });
-
-          const u: UTxO = {
+  
+          return {
             address: utxo.utxo.address,
             outputIndex: utxo.utxo.output_index,
             txHash: utxo.utxo.tx_hash,
-            assets: assets,
+            assets,
             datum: utxo.utxo.inline_datum,
           };
-
-          return u;
         })
         .toArray();
-
+  
+      errorLogs.push("Building transaction...");
       const txn = lucid.newTx().collectFrom(scriptUtxos, redeemer);
-
+  
       cart.values().forEach((utxo) => txn.addSigner(utxo.mustBeSignedBy));
-
+  
       const x = cart.values().find(() => true);
-      if (!x) return;
-
+      if (!x) {
+        errorLogs.push("No UTxOs found in the cart.");
+        console.log(errorLogs);
+        return;
+      }
+  
       const walletAddress = (await wallet.getUsedAddress()).toBech32();
+      errorLogs.push(`Wallet address obtained: ${walletAddress}`);
+  
+      errorLogs.push("Finalizing transaction...");
       const completeTx = await txn
         .validFrom(Date.now())
         .validTo(Date.now() + 3 * 60 * 1000)
@@ -178,14 +193,14 @@ export function Available() {
           changeAddress: walletAddress,
           localUPLCEval: false,
         });
-
-      console.log(completeTx.toCBOR());
-
+  
+      errorLogs.push("Transaction finalized. Signing transaction...");
       const signed = await completeTx.sign.withWallet().complete();
       const txHash = await signed.submit();
-
+      errorLogs.push(`Transaction submitted successfully: ${txHash}`);
+  
       lucid.awaitTx(txHash);
-
+  
       toast(
         <div className="flex items-center gap-2">
           <svg
@@ -229,42 +244,35 @@ export function Available() {
           duration: 10000,
         }
       );
-
-
+  
       const updatedCart = new Map(cart);
       updatedCart.forEach((value) => {
         value.status = "Submitted";
       });
       setCart(updatedCart);
-
-      // const confirmed = await lucid.awaitTx(txHash);
-      // if (confirmed) {
-      //   toast.success("Transaction confirmed!");
-      //   refetch(); // Refresh the data after confirmation
-      // } else {
-      //   toast.error("Transaction not confirmed within the expected time.");
-      //   updatedCart.forEach((value) => {
-      //     value.status = "Pending";
-      //   });
-      //   setCart(updatedCart);
-      // }
-    } catch (e) {
-      toast.error("Error processing cart");
+    } catch (e: any) {
+      errorLogs.push(`Error encountered: ${e.message || e || "Unknown error"}`);
       fetch("/api/log", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          messages: ["Error from processCart: ", JSON.stringify(e)],
+          messages: errorLogs,
+          errorDetails: {
+            message: e.message || "Unknown error",
+            stack: e.stack || "No stack trace available",
+          },
         }),
       })
         .then((res) => res.json())
         .then((data) => console.log("API Response:", data))
         .catch((err) => console.error("Error:", err));
-
+  
       console.error(e);
     } finally {
+      errorLogs.push("Completed processing.");
+      // console.log(errorLogs);
       setLoadingState("none");
     }
   }
