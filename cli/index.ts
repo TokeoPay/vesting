@@ -124,13 +124,13 @@ async function main() {
       const [newWalletInputs, , chainTx] = await tx.chain();
       const signed = await chainTx.sign.withWallet().complete();
 
+      console.log("\n\n", signed.toCBOR(), "\n\n");
       if (!inDebug) {
         const txHash = await signed.submit();
         console.log(txHash);
         txHashList.push(txHash);
 
         await lucid.awaitTx(txHash);
-        console.log("\n\n", signed.toCBOR(), "\n\n");
         // const txHash = await signed.submit();
         // console.log("txHash", txHash);
         lucid.overrideUTxOs(newWalletInputs);
