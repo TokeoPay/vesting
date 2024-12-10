@@ -112,6 +112,7 @@ export default async function handler(
           ),
           vestingSlot: Data.from(u.inline_datum!, TokeDatum).slot.toString(),
           available:
+            // true ||
             Date.now() >
             slotToUnixTime(
               network,

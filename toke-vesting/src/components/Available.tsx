@@ -86,16 +86,19 @@ export function Available() {
 
   function addToCart(utxo: VestingResponse) {
     setCart((prevCart) => {
-      
-      prevCart[`${utxo.utxo.tx_hash}.${utxo.utxo.output_index}`] = utxo
-      return prevCart;
+      const newCart = {
+        ...prevCart,
+        [`${utxo.utxo.tx_hash}.${utxo.utxo.output_index}`]: utxo,
+      };
+      return newCart;
     });
   }
 
   function removeFromCart(utxo: VestingResponse) {
     setCart((prevCart) => {
-      delete prevCart[`${utxo.utxo.tx_hash}.${utxo.utxo.output_index}`]
-      return prevCart;
+      const newCart = { ...prevCart };
+      delete newCart[`${utxo.utxo.tx_hash}.${utxo.utxo.output_index}`];
+      return newCart;
     });
   }
   useEffect(() => {
