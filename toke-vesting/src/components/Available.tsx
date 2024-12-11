@@ -390,7 +390,6 @@ export function Available() {
             </div>
           </div>
         </div>
-        
       </div>
       {loadingState === "loading" ? (
         <div className='w-full h-full flex justify-center items-center'>
@@ -414,7 +413,10 @@ export function Available() {
                 locked={locked}
               />
 
-              <table className='w-full border-collapse border border-gray-800 rounded-lg overflow-hidden shadow'>
+              <table
+                style={{ tableLayout: "fixed" }}
+                className='w-full border-collapse border border-gray-800 rounded-lg overflow-hidden shadow'
+              >
                 <thead>
                   <tr className='bg-gray-200'>
                     <th className='px-4 py-3 text-gray-800 text-left font-semibold'>
@@ -430,7 +432,8 @@ export function Available() {
                 </thead>
                 <tbody>
                   {sortedData?.map((u: VestingResponse, index: any) => {
-                    const isInCart = !!cart[`${u.utxo.tx_hash}.${u.utxo.output_index}`];
+                    const isInCart =
+                      !!cart[`${u.utxo.tx_hash}.${u.utxo.output_index}`];
 
                     return (
                       <tr
