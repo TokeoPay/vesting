@@ -1,0 +1,26 @@
+diff --git a/node_modules/@lucid-evolution/lucid/dist/index.cjs b/node_modules/@lucid-evolution/lucid/dist/index.cjs
+index 76dd58b..bbc3570 100644
+--- a/node_modules/@lucid-evolution/lucid/dist/index.cjs
++++ b/node_modules/@lucid-evolution/lucid/dist/index.cjs
+@@ -1656,7 +1656,7 @@ var findCollateral = (coinsPerUtxoByte, setCollateral, inputs) => import_effect1
+       are excluded from collateral selection.`
+   );
+   const { selected } = yield* recursive(
+-    (0, import_utils10.sortUTxOs)(inputs),
++    (0, import_utils10.sortUTxOs)(inputs, "Collateral"),
+     collateralLovelace,
+     coinsPerUtxoByte,
+     void 0,
+diff --git a/node_modules/@lucid-evolution/lucid/dist/index.js b/node_modules/@lucid-evolution/lucid/dist/index.js
+index e48b423..520a95c 100644
+--- a/node_modules/@lucid-evolution/lucid/dist/index.js
++++ b/node_modules/@lucid-evolution/lucid/dist/index.js
+@@ -1637,7 +1637,7 @@ var findCollateral = (coinsPerUtxoByte, setCollateral, inputs) => Effect17.gen(f
+       are excluded from collateral selection.`
+   );
+   const { selected } = yield* recursive(
+-    sortUTxOs(inputs),
++    sortUTxOs(inputs, "Collateral"),
+     collateralLovelace,
+     coinsPerUtxoByte,
+     void 0,
