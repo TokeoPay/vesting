@@ -1,0 +1,48 @@
+diff --git a/node_modules/@lucid-evolution/utils/dist/index.cjs b/node_modules/@lucid-evolution/utils/dist/index.cjs
+index d700420..a4c2530 100644
+--- a/node_modules/@lucid-evolution/utils/dist/index.cjs
++++ b/node_modules/@lucid-evolution/utils/dist/index.cjs
+@@ -1555,8 +1555,19 @@ var sortUTxOs = (utxos, order = "LargestFirst") => {
+       return [...utxos].sort(smallestFirst);
+     case "Canonical":
+       return [...utxos].sort(canonical);
++    case "Collateral":
++      return [...utxos].sort(collateralOrder);
+   }
+ };
++var collateralOrder = (a, b) => {
++  const lovelaceA = Number(a.assets["lovelace"]);
++  const lovelaceB = Number(b.assets["lovelace"]);
++  const assetsA = Object.keys(a.assets).length;
++  const assetsB = Object.keys(b.assets).length;
++  if (assetsA === 0 && assetsB > 0) return -1;
++  if (assetsB === 0 && assetsA > 0) return 1;
++  return lovelaceB - lovelaceA;
++};
+ var largestFirst = (a, b) => {
+   const lovelaceA = Number(a.assets["lovelace"]);
+   const lovelaceB = Number(b.assets["lovelace"]);
+diff --git a/node_modules/@lucid-evolution/utils/dist/index.js b/node_modules/@lucid-evolution/utils/dist/index.js
+index ac2b9fe..c596343 100644
+--- a/node_modules/@lucid-evolution/utils/dist/index.js
++++ b/node_modules/@lucid-evolution/utils/dist/index.js
+@@ -1471,8 +1471,19 @@ var sortUTxOs = (utxos, order = "LargestFirst") => {
+       return [...utxos].sort(smallestFirst);
+     case "Canonical":
+       return [...utxos].sort(canonical);
++    case "Collateral":
++      return [...utxos].sort(collateralOrder);
+   }
+ };
++var collateralOrder = (a, b) => {
++  const lovelaceA = Number(a.assets["lovelace"]);
++  const lovelaceB = Number(b.assets["lovelace"]);
++  const assetsA = Object.keys(a.assets).length;
++  const assetsB = Object.keys(b.assets).length;
++  if (assetsA === 0 && assetsB > 0) return -1;
++  if (assetsB === 0 && assetsA > 0) return 1;
++  return lovelaceB - lovelaceA;
++};
+ var largestFirst = (a, b) => {
+   const lovelaceA = Number(a.assets["lovelace"]);
+   const lovelaceB = Number(b.assets["lovelace"]);
