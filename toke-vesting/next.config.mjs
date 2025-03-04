@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  productionBrowserSourceMaps: true,
   webpack: function (config, {}) {
     config.experiments = {
       asyncWebAssembly: true,
