@@ -130,42 +130,6 @@ export function Available() {
 
     if (Object.keys(cart).length === 0) return;
 
-    // try {
-
-    //   const txBuilder = new TransactionBuilder()
-
-    //   const inputsBuilder = new TxInputsBuilder()
-
-    //   Object.values(cart).forEach((utxo) => {
-    //     const assets: Record<string, bigint> = {};
-
-    //     utxo.utxo.amount.forEach((asset) => {
-    //       assets[asset.unit] = BigInt(asset.quantity);
-    //     });
-
-    //     const u: UTxO = {
-    //       address: utxo.utxo.address,
-    //       outputIndex: utxo.utxo.output_index,
-    //       txHash: utxo.utxo.tx_hash,
-    //       assets: assets,
-    //       datum: utxo.utxo.inline_datum,
-    //     };
-
-    //     inputsBuilder.add_plutus_script_utxo(
-    //       TransactionUnspentOutput.from_bytes(
-    //         utxoToCore(u).to_cbor_bytes()
-    //       ),
-    //       PlutusWitness.
-    //     )
-
-    //   });
-
-    //   txBuilder.add_inputs_from()
-
-    // } catch (err) {
-    //   throw err
-    // }
-
     try {
       setLoadingState("processing");
       errorLogs.push("Initializing Lucid instance...");
@@ -230,8 +194,29 @@ export function Available() {
       errorLogs.push(`Wallet address obtained: ${walletAddress}`);
 
       errorLogs.push("Finalizing transaction...");
+      
+      // Find the biggest vestingDate in the cart
+      let maxVestingDate: number | null = null;
+      Object.values(cart).forEach((v) => {
+        if (v.vestingDate !== undefined && v.vestingDate !== null) {
+          const dateNum = Number(v.vestingDate);
+          if (!isNaN(dateNum)) {
+            if (maxVestingDate === null || dateNum > maxVestingDate) {
+              maxVestingDate = dateNum;
+            }
+          }
+        }
+      });
+
+      if (maxVestingDate === null) {
+        throw new Error("No vesting dates found in the cart.");
+      }
+      if (maxVestingDate > Date.now()) {
+        throw new Error("The maximum vesting date in the cart is in the future. All vesting dates must be in the past.");
+      }
+
       const completeTx = await txn
-        .validFrom(Date.now())
+        .validFrom(maxVestingDate)
         .validTo(Date.now() + 3 * 60 * 1000)
         .attach.SpendingValidator({
           type: "PlutusV3",
