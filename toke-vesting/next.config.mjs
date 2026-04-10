@@ -1,34 +1,51 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   webpack: function (config, {}) {
+    // Merge with existing experiments rather than replace them
     config.experiments = {
+      ...config.experiments,
       asyncWebAssembly: true,
       layers: true,
     };
+
+    // Explicit rule so webpack treats .wasm files as async WebAssembly modules
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: "webassembly/async",
+    });
+
+    // The ESM build of libsodium-wrappers-sumo imports ./libsodium-sumo.mjs
+    // which doesn't exist in the package. Force the CJS build instead.
+    config.resolve.alias["libsodium-wrappers-sumo"] = path.resolve(
+      __dirname,
+      "node_modules/libsodium-wrappers-sumo/dist/modules-sumo/libsodium-wrappers.js"
+    );
+
     return config;
   },
   async rewrites() {
     return [
       {
         source: "/kupo",
-        destination:
-          "https://kupo16gs522exsrd2kg5u2nh.preprod-v2.kupo-m1.demeter.run",
+        destination: process.env.KUPO_PREPROD_URL,
       },
       {
         source: "/ogmios",
-        destination:
-          "https://ogmios10y4c4fvjh7hwu8g68fy.preprod-v6.ogmios-m1.demeter.run",
+        destination: process.env.OGMIOS_PREPROD_URL,
       },
       {
         source: "/kupo-mn",
-        destination:
-          "https://kupo1fhxasl9retdeu8gdx76.mainnet-v2.kupo-m1.demeter.run",
+        destination: process.env.KUPO_MAINNET_URL,
       },
       {
         source: "/ogmios-mn",
-        destination:
-          "https://ogmios1djuec990uqhtuj9qkm0.mainnet-v6.ogmios-m1.demeter.run",
+        destination: process.env.OGMIOS_MAINNET_URL,
       },
     ];
   },
