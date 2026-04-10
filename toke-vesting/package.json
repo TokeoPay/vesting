@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package && node scripts/fix-libsodium.mjs"
   },
   "dependencies": {
     "@blockfrost/blockfrost-js": "^6.0.0",
