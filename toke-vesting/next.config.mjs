@@ -6,6 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  productionBrowserSourceMaps: true,
   webpack: function (config, {}) {
     // Merge with existing experiments rather than replace them
     config.experiments = {

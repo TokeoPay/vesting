@@ -3,6 +3,7 @@ import {readFile} from "node:fs/promises"
 import plutus from "../plutus.json"
 import { createReadStream } from "node:fs";
 import { parse } from "csv-parse";
+import { getDateToCurrentSlot, TokeDatum } from "./utils";
 
 async function main() {
   // const blockfrost = new BlockfrostProvider()
@@ -146,21 +147,6 @@ async function main() {
 }
 
 
-
-function getDateToCurrentSlot(currentSlot: number) {
-  const currentDate = Math.floor(Date.now() / 1000)
-  return (forDate: number) => {
-  
-    return Math.floor(currentSlot + ((forDate - currentDate)))
-  }
-}
-
-export const TokeDatumSchema = Data.Object({
-  slot: Data.Integer(),
-  beneficiary: Data.Bytes(),
-});
-export type TokeDatum = Data.Static<typeof TokeDatumSchema>;
-export const TokeDatum = TokeDatumSchema as unknown as TokeDatum;
 
 
 let payouts: {[key: string]: string}[] = [
