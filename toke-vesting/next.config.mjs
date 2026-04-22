@@ -33,20 +33,20 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: "/kupo",
-        destination: process.env.KUPO_PREPROD_URL,
+        source: "/kupo/:path*",
+        destination: `${process.env.KUPO_PREPROD_URL}/:path*`,
       },
       {
-        source: "/ogmios",
-        destination: process.env.OGMIOS_PREPROD_URL,
+        source: "/ogmios/:path*",
+        destination: `${process.env.OGMIOS_PREPROD_URL}/:path*`,
       },
       {
-        source: "/kupo-mn",
-        destination: process.env.KUPO_MAINNET_URL,
+        source: "/kupo-mn/:path*",
+        destination: `${process.env.KUPO_MAINNET_URL}/:path*`,
       },
       {
-        source: "/ogmios-mn",
-        destination: process.env.OGMIOS_MAINNET_URL,
+        source: "/ogmios-mn/:path*",
+        destination: `${process.env.OGMIOS_MAINNET_URL}/:path*`,
       },
     ];
   },
