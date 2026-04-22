@@ -2,6 +2,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
 import { validators } from "../../../../plutus.json";
+// Note: Using @lucid-evolution/lucid for API routes to avoid WASM bundling issues
+// The client uses @evolution-sdk/lucid with dynamic import (SSR disabled)
 import {
   Data,
   getAddressDetails,

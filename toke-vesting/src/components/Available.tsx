@@ -11,9 +11,9 @@ import {
   Constr,
   Data,
   UTxO,
-  Kupmios,
   addressFromHexOrBech32,
-} from "@lucid-evolution/lucid";
+} from "@evolution-sdk/lucid";
+import { Blockfrost } from "@evolution-sdk/provider";
 
 import toast, { ErrorIcon } from "react-hot-toast";
 
@@ -134,7 +134,7 @@ export function Available() {
       setLoadingState("processing");
       errorLogs.push("Initializing Lucid instance...");
       const lucid = await Lucid(
-        new Kupmios("/kupo-mn", "/ogmios-mn"),
+        new Blockfrost("/api/bf", "proxy"),
         "Mainnet"
       );
       errorLogs.push("Selecting wallet from API...");
@@ -222,11 +222,7 @@ export function Available() {
           type: "PlutusV3",
           script: script.code,
         })
-        .complete({
-          canonical: true,
-          changeAddress: walletAddress.to_bech32(),
-          localUPLCEval: false,
-        });
+        .complete();
 
       console.log(completeTx.toCBOR());
       errorLogs.push("Transaction finalized. Signing transaction...");

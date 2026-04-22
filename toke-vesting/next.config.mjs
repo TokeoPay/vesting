@@ -7,16 +7,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
   productionBrowserSourceMaps: true,
-  webpack: function (config, {}) {
+  transpilePackages: ["@evolution-sdk/lucid", "@evolution-sdk/provider", "@evolution-sdk/uplc"],
+  webpack: function (config, { isServer }) {
     // Merge with existing experiments rather than replace them
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
+      syncWebAssembly: true,
       layers: true,
     };
 
-    // Explicit rule so webpack treats .wasm files as async WebAssembly modules
-    config.module.rules.push({
+    // Handle WASM files from @evolution-sdk/uplc
+    // Push rule to the beginning for priority
+    config.module.rules.unshift({
       test: /\.wasm$/,
       type: "webassembly/async",
     });
@@ -28,28 +31,15 @@ const nextConfig = {
       "node_modules/libsodium-wrappers-sumo/dist/modules-sumo/libsodium-wrappers.js"
     );
 
+    // Ensure WASM files are loaded from the correct location
+    config.output.webassemblyModuleFilename = "static/wasm/[modulehash].wasm";
+
     return config;
   },
-  async rewrites() {
-    return [
-      {
-        source: "/kupo/:path*",
-        destination: `${process.env.KUPO_PREPROD_URL}/:path*`,
-      },
-      {
-        source: "/ogmios/:path*",
-        destination: `${process.env.OGMIOS_PREPROD_URL}/:path*`,
-      },
-      {
-        source: "/kupo-mn/:path*",
-        destination: `${process.env.KUPO_MAINNET_URL}/:path*`,
-      },
-      {
-        source: "/ogmios-mn/:path*",
-        destination: `${process.env.OGMIOS_MAINNET_URL}/:path*`,
-      },
-    ];
-  },
+  // Note: Kupmios/Ogmios rewrites removed - now using BlockFrost via /api/bf proxy
+  // async rewrites() {
+  //   return [];
+  // },
 };
 
 export default nextConfig;

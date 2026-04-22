@@ -1,7 +1,14 @@
 import localFont from "next/font/local";
-import { Available } from "../components/Available";
+import dynamic from "next/dynamic";
 import { Header } from "@/components/Header";
 import { Toaster } from "react-hot-toast";
+
+// Dynamically import Available component with SSR disabled
+// This is required because it uses WebAssembly which cannot be server-rendered
+const Available = dynamic(() => import("../components/Available").then(mod => mod.Available), {
+  ssr: false,
+  loading: () => <div className="flex justify-center items-center py-8">Loading...</div>,
+});
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
